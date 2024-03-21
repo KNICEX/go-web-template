@@ -1,0 +1,7 @@
+app:
+  name: local-dev
+  mode: dev
+
+
+log:
+  level: error

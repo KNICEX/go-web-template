@@ -1,0 +1,36 @@
+app:
+  name: test_app
+  mode: dev
+  remote:
+    type: yaml
+    provider: etcd3
+    addr: http://127.0.0.1:2379
+    path: /config/app
+
+server:
+  port: 8081
+  prefix: /api
+  cores:
+    enabled: true
+    allow_origins: ["*"]
+    expose_headers: ["*"]
+
+log:
+  level: debug
+  path: /web_app/logs
+  filename: web_app.log
+  max_backups: 5
+
+database:
+  type: mysql
+  host: localhost
+  port: 3306
+  name: test_db
+  user: root
+  password: rr987654321
+
+redis:
+  host: localhost
+  port: 6379
+  password: rr987654321
+  db: 0

@@ -1,0 +1,12 @@
+{"level":"info","ts":1710925194.4415593,"caller":"logger/init_test.go:12","msg":"info"}
+{"level":"debug","ts":1710925194.4415593,"caller":"logger/init_test.go:13","msg":"debug"}
+{"level":"warn","ts":1710925194.4415593,"caller":"logger/init_test.go:14","msg":"warn"}
+{"level":"error","ts":1710925194.4415593,"caller":"logger/init_test.go:15","msg":"error"}
+{"level":"info","ts":"2024-03-20T17:02:30.509+0800","caller":"logger/init_test.go:12","msg":"info"}
+{"level":"debug","ts":"2024-03-20T17:02:30.509+0800","caller":"logger/init_test.go:13","msg":"debug"}
+{"level":"warn","ts":"2024-03-20T17:02:30.509+0800","caller":"logger/init_test.go:14","msg":"warn"}
+{"level":"error","ts":"2024-03-20T17:02:30.509+0800","caller":"logger/init_test.go:15","msg":"error"}
+{"level":"info","ts":"2024-03-20T17:08:35.587+0800","caller":"logger/init_test.go:12","msg":"info"}
+{"level":"debug","ts":"2024-03-20T17:08:35.588+0800","caller":"logger/init_test.go:13","msg":"debug"}
+{"level":"warn","ts":"2024-03-20T17:08:35.588+0800","caller":"logger/init_test.go:14","msg":"warn"}
+{"level":"error","ts":"2024-03-20T17:08:35.588+0800","caller":"logger/init_test.go:15","msg":"error"}
