@@ -2,8 +2,8 @@ package cache
 
 import (
 	"fmt"
+	"go-web-template/pkg/utils"
 	"log"
-	"my-bluebell/pkg/utils"
 	"os"
 	"sync"
 	"time"
@@ -187,7 +187,7 @@ func (store *LocalStore) Restore(paths ...string) (err error) {
 }
 
 func (store *LocalStore) Close() error {
-	return nil
+	return store.Persist()
 }
 
 func (store *LocalStore) Ping() error {

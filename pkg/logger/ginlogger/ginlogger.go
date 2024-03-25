@@ -3,7 +3,7 @@ package ginlogger
 import (
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
-	"my-bluebell/pkg/logger"
+	"go-web-template/pkg/logger"
 	"time"
 )
 

@@ -68,12 +68,24 @@ type logConf struct {
 	Compress   bool   `mapstructure:"compress"`
 }
 
+type emailConf struct {
+	Name      string `mapstructure:"name"`
+	Address   string `mapstructure:"address"`
+	ReplyTo   string `mapstructure:"reply_to"`
+	Host      string `mapstructure:"host"`
+	Port      int    `mapstructure:"port"`
+	User      string `mapstructure:"user"`
+	Password  string `mapstructure:"password"`
+	Keepalive int    `mapstructure:"keepalive"`
+}
+
 type conf struct {
 	App      appConf      `mapstructure:"app"`
 	Server   serverConf   `mapstructure:"server"`
 	Database databaseConf `mapstructure:"database"`
 	Redis    redisConf    `mapstructure:"redis"`
 	Log      logConf      `mapstructure:"log"`
+	Email    emailConf    `mapstructure:"email"`
 }
 
 func GetString(key string) string {

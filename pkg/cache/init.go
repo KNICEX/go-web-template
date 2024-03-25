@@ -2,8 +2,8 @@ package cache
 
 import (
 	"fmt"
-	"my-bluebell/pkg/conf"
-	"my-bluebell/pkg/logger"
+	"go-web-template/pkg/conf"
+	"go-web-template/pkg/logger"
 )
 
 var Store Driver = NewLocalStore()

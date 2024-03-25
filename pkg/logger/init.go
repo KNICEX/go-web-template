@@ -1,10 +1,10 @@
 package logger
 
 import (
+	"go-web-template/pkg/conf"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"my-bluebell/pkg/conf"
 	"os"
 )
 

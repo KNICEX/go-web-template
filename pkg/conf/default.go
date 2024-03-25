@@ -42,13 +42,17 @@ var defaultLog = logConf{
 	Compress:   false,
 }
 
+var defaultEmail = emailConf{
+	Keepalive: 60,
+}
+
 func setDefault() {
 	setDefaultDB()
 	setDefaultApp()
 	setDefaultServer()
 	setDefaultRedis()
 	setDefaultLog()
-
+	setDefaultEmail()
 }
 
 func setDefaultDB() {
@@ -69,4 +73,8 @@ func setDefaultRedis() {
 
 func setDefaultLog() {
 	cfg.Log = defaultLog
+}
+
+func setDefaultEmail() {
+	cfg.Email = defaultEmail
 }

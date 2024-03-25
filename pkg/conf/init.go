@@ -23,6 +23,7 @@ var ServerConf *serverConf
 var DatabaseConf *databaseConf
 var RedisConf *redisConf
 var LogConf *logConf
+var EmailConf *emailConf
 
 func setExpose() {
 	AppConf = &cfg.App
@@ -30,6 +31,7 @@ func setExpose() {
 	DatabaseConf = &cfg.Database
 	RedisConf = &cfg.Redis
 	LogConf = &cfg.Log
+	EmailConf = &cfg.Email
 }
 
 func Init(path ...string) {
