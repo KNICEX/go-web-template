@@ -5,6 +5,7 @@ type appConf struct {
 	Name          string     `mapstructure:"name"`
 	SessionSecret string     `mapstructure:"session_secret"`
 	RemoteConf    remoteConf `mapstructure:"remote"`
+	Debug         bool       `mapstructure:"debug"`
 }
 
 type serverConf struct {
@@ -70,8 +71,6 @@ type logConf struct {
 
 type emailConf struct {
 	Name      string `mapstructure:"name"`
-	Address   string `mapstructure:"address"`
-	ReplyTo   string `mapstructure:"reply_to"`
 	Host      string `mapstructure:"host"`
 	Port      int    `mapstructure:"port"`
 	User      string `mapstructure:"user"`

@@ -26,11 +26,9 @@ func (client *SMTP) Send(to, title, body string) error {
 		return ErrChanNotOpen
 	}
 	m := gomail.NewMessage()
-	m.SetAddressHeader("From", conf.EmailConf.Address, conf.EmailConf.Name)
-	m.SetAddressHeader("Reply-To", conf.EmailConf.ReplyTo, conf.EmailConf.Name)
+	m.SetAddressHeader("From", conf.EmailConf.User, conf.EmailConf.Name)
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", title)
-	//m.SetHeader("Message-ID", "xxx")
 	m.SetBody("text/html", body)
 	client.ch <- m
 	return nil
@@ -48,7 +46,7 @@ func (client *SMTP) Init() {
 		defer func() {
 			if err := recover(); err != nil {
 				client.chOpen = false
-				logger.Error("Email sending queue crashed: ", err, "Resetting in 10 seconds.")
+				logger.L().Error("Email sending queue crashed: ", err, "Resetting in 10 seconds.")
 				time.Sleep(10 * time.Second)
 				client.Init()
 			}
@@ -67,7 +65,7 @@ func (client *SMTP) Init() {
 			select {
 			case m, ok := <-client.ch:
 				if !ok {
-					logger.Debug("Email queue closing...")
+					logger.L().Debug("Email queue closing...")
 					client.chOpen = false
 					return
 				}
@@ -79,16 +77,17 @@ func (client *SMTP) Init() {
 					open = true
 				}
 				if err = gomail.Send(s, m); err != nil {
-					logger.Warn("Failed to send email: ", err)
+					logger.L().Warn("Failed to send email: ", err)
 				} else {
-					logger.Debug("Email sent.")
+					logger.L().Debug("Email sent.")
 				}
 			//	长时间没有发送邮件，关闭连接
 			case <-time.After(time.Duration(conf.EmailConf.Keepalive) * time.Second):
 				if open {
 					if err = s.Close(); err != nil {
-						logger.Warn("Failed to close SMTP connection: ", err)
+						logger.L().Warn("Failed to close SMTP connection: ", err)
 					}
+					open = false
 				}
 			}
 		}

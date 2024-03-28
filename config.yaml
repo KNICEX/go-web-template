@@ -1,6 +1,7 @@
 app:
   name: test_app
   mode: dev
+  debug: false
 
 server:
   port: 8081

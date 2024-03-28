@@ -12,13 +12,7 @@ var globalLogger *zap.Logger
 
 var sugarLogger *zap.SugaredLogger
 
-var isDev bool
-
 func Init() {
-	switch conf.AppConf.Mode {
-	case "", "dev", "test", "debug", "local", "develop", "development":
-		isDev = true
-	}
 	encoder := getEncoder()
 	writeSyncer := getWriterSyncer()
 	level := getLogLevel()
@@ -28,7 +22,7 @@ func Init() {
 }
 
 func getEncoder() zapcore.Encoder {
-	if isDev {
+	if conf.AppConf.Debug {
 		devConf := zap.NewDevelopmentEncoderConfig()
 		devConf.EncodeLevel = zapcore.CapitalColorLevelEncoder
 		return zapcore.NewConsoleEncoder(devConf)
@@ -40,7 +34,7 @@ func getEncoder() zapcore.Encoder {
 }
 
 func getWriterSyncer() zapcore.WriteSyncer {
-	if isDev {
+	if conf.AppConf.Debug {
 		return zapcore.AddSync(os.Stdout)
 	} else {
 		lumberJackLogger := lumberjack.Logger{

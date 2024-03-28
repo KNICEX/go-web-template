@@ -12,7 +12,7 @@ func Init() {
 		return
 	}
 
-	logger.Debug("Initializing email sending queue...")
+	logger.L().Debug("Initializing email sending queue...")
 
 	Client = NewSMTPClient()
 }
