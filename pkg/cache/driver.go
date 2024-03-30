@@ -117,3 +117,20 @@ func deserializeReader(reader io.Reader) (any, error) {
 	}
 	return storeValue.Value, nil
 }
+
+func GetStrs(keys []string, prefix string) (map[string]string, []string) {
+	anyRes, miss := Store.Gets(keys, prefix)
+	res := make(map[string]string)
+	for k, v := range anyRes {
+		res[k] = v.(string)
+	}
+	return res, miss
+}
+
+func SetStrs(values map[string]string, prefix string, ttl time.Duration) error {
+	anyValues := make(map[string]any)
+	for k, v := range values {
+		anyValues[k] = v
+	}
+	return Store.Sets(anyValues, prefix, ttl)
+}

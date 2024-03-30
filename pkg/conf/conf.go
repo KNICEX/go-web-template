@@ -6,6 +6,8 @@ type appConf struct {
 	SessionSecret string     `mapstructure:"session_secret"`
 	RemoteConf    remoteConf `mapstructure:"remote"`
 	Debug         bool       `mapstructure:"debug"`
+	DataCenterId  int64      `mapstructure:"data_center_id"`
+	MachineId     int64      `mapstructure:"machine_id"`
 }
 
 type serverConf struct {
