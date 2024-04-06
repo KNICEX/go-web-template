@@ -12,87 +12,96 @@ import (
 var _ Driver = &LocalStore{}
 
 type LocalStore struct {
-	Store *sync.Map
+	data map[string]*itemWithTTL
+	mu   sync.RWMutex
 }
 
 const DefaultCacheFile = "cache_persist.bin"
 
 type itemWithTTL struct {
-	Expires int64
-	Value   any
+	ExpireAt time.Time
+	Value    any
 }
 
-func newItem(value any, duration time.Duration) itemWithTTL {
-	expires := int64(-1)
-	if duration > 0 {
-		expires = time.Now().Add(duration).Unix()
-	}
-	return itemWithTTL{
-		Value:   value,
-		Expires: expires,
-	}
-}
-
-func getValue(item any) (any, bool) {
-	var itemObj itemWithTTL
-	var ok bool
-	if itemObj, ok = item.(itemWithTTL); !ok {
-		return item, true
-	}
-	if itemObj.Expires > 0 && itemObj.Expires < time.Now().Unix() {
-		return nil, false
-	}
-	return itemObj.Value, ok
-}
-
-func (store *LocalStore) getValue(key string) (any, bool) {
-	v, ok := store.Store.Load(key)
-	if !ok {
-		return nil, false
-	}
-	item, ok := v.(itemWithTTL)
-	if !ok {
-		return v, true
-	}
-	if item.Expires > 0 && item.Expires < time.Now().Unix() {
-		store.Store.Delete(key)
-		return nil, false
-	}
-	return item.Value, true
-}
-
-// GarbageCollect 回收过期的缓存
-func (store *LocalStore) GarbageCollect() {
-	store.Store.Range(func(key, value any) bool {
-		if item, ok := value.(itemWithTTL); ok {
-			if item.Expires > 0 && item.Expires < time.Now().Unix() {
-				store.Store.Delete(key)
-			}
-		}
-		return true
-	})
+func (i *itemWithTTL) expiredBefore(t time.Time) bool {
+	return !i.ExpireAt.IsZero() && i.ExpireAt.Before(t)
 }
 
 func NewLocalStore() *LocalStore {
-	return &LocalStore{
-		Store: &sync.Map{},
+	res := &LocalStore{
+		data: make(map[string]*itemWithTTL),
 	}
+
+	go func() {
+		ticker := time.NewTicker(time.Second * 10)
+		for {
+			select {
+			case t := <-ticker.C:
+				cnt := 0
+				res.mu.Lock()
+				for k, v := range res.data {
+					if cnt > 1000 {
+						break
+					}
+					if v.expiredBefore(t) {
+						delete(res.data, k)
+					}
+					cnt++
+				}
+				res.mu.Unlock()
+			}
+		}
+	}()
+
+	return res
 }
 
 func (store *LocalStore) Set(key string, value any, ttl time.Duration) error {
-	store.Store.Store(key, newItem(value, ttl))
+	var expireAt time.Time
+	if ttl > 0 {
+		expireAt = time.Now().Add(ttl)
+	}
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	store.data[key] = &itemWithTTL{
+		ExpireAt: expireAt,
+		Value:    value,
+	}
 	return nil
 }
 
 func (store *LocalStore) Get(key string) (any, bool) {
-	return store.getValue(key)
+	store.mu.RLock()
+	item, ok := store.data[key]
+	store.mu.RUnlock()
+	if !ok {
+		return nil, false
+	}
+
+	now := time.Now()
+	if item.expiredBefore(now) {
+		store.mu.Lock()
+		defer store.mu.Unlock()
+		// double check
+		item, ok = store.data[key]
+		if !ok {
+			return nil, false
+		}
+		if item.expiredBefore(now) {
+			delete(store.data, key)
+			return nil, false
+		}
+	}
+	return item.Value, true
 }
 
 func (store *LocalStore) Gets(keys []string, prefix string) (map[string]any, []string) {
 	res := make(map[string]any)
 	var miss []string
+	store.mu.RLock()
+	defer store.mu.RUnlock()
 	for _, key := range keys {
-		if value, ok := store.getValue(prefix + key); ok {
+		if value, ok := store.data[prefix+key]; ok {
 			res[key] = value
 		} else {
 			miss = append(miss, key)
@@ -102,20 +111,34 @@ func (store *LocalStore) Gets(keys []string, prefix string) (map[string]any, []s
 }
 
 func (store *LocalStore) Sets(values map[string]any, prefix string, ttl time.Duration) error {
-	for key, value := range values {
-		store.Store.Store(prefix+key, newItem(value, ttl))
+	var expireAt time.Time
+	if ttl > 0 {
+		expireAt = time.Now().Add(ttl)
+	}
+
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	for k, v := range values {
+		store.data[prefix+k] = &itemWithTTL{
+			ExpireAt: expireAt,
+			Value:    v,
+		}
 	}
 	return nil
 }
 
 func (store *LocalStore) Delete(key string) error {
-	store.Store.Delete(key)
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	delete(store.data, key)
 	return nil
 }
 
 func (store *LocalStore) Deletes(keys []string, prefix string) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
 	for _, key := range keys {
-		store.Store.Delete(prefix + key)
+		delete(store.data, prefix+key)
 	}
 	return nil
 }
@@ -127,13 +150,15 @@ func (store *LocalStore) Persist(paths ...string) error {
 	} else {
 		path = DefaultCacheFile
 	}
+	t := time.Now()
 	persisted := make(persistedMap)
-	store.Store.Range(func(key, value any) bool {
-		if item, ok := value.(itemWithTTL); ok {
-			persisted[key.(string)] = item
+	store.mu.RLock()
+	defer store.mu.RUnlock()
+	for k, v := range store.data {
+		if !v.expiredBefore(t) {
+			persisted[k] = *v
 		}
-		return true
-	})
+	}
 
 	res, err := serialize(persisted)
 	if err != nil {
@@ -176,9 +201,12 @@ func (store *LocalStore) Restore(paths ...string) (err error) {
 	pm := item.(persistedMap)
 
 	loaded := 0
+	t := time.Now()
+	store.mu.Lock()
+	defer store.mu.Unlock()
 	for k, v := range pm {
-		if _, ok := getValue(v); ok {
-			store.Store.Store(k, v)
+		if !v.expiredBefore(t) {
+			store.data[k] = &v
 			loaded++
 		}
 	}

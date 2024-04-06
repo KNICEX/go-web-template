@@ -8,22 +8,23 @@ import (
 )
 
 type RedisStore struct {
-	rc redis.Client
+	rc     redis.Cmdable
+	closer func() error
 }
 
 var _ Driver = &RedisStore{}
 
-func NewRedisStore(network, addr, user, password string, database, poolSize int) *RedisStore {
-	return &RedisStore{
-		rc: *redis.NewClient(&redis.Options{
-			Addr:     addr,
-			Password: password,
-			DB:       database,
-			Username: user,
-			Network:  network,
-			PoolSize: poolSize,
-		}),
+func NewRedisStore(rc redis.Cmdable, closer ...func() error) *RedisStore {
+	res := &RedisStore{
+		rc: rc,
+		closer: func() error {
+			return nil
+		},
 	}
+	if len(closer) > 0 {
+		res.closer = closer[0]
+	}
+	return res
 }
 
 func (store *RedisStore) Set(key string, value any, ttl time.Duration) error {
@@ -106,7 +107,7 @@ func (store *RedisStore) Restore(_ ...string) error {
 }
 
 func (store *RedisStore) Close() error {
-	return store.rc.Close()
+	return store.closer()
 }
 
 func (store *RedisStore) Ping() error {
